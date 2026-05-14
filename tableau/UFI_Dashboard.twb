@@ -1,0 +1,87 @@
+<?xml version='1.0' encoding='utf-8' ?>
+<workbook source-build='2024.1.0' source-platform='linux' version='21.4' xmlns:user='http://www.tableausoftware.com/xml/user'>
+  <datasources>
+    <datasource caption='UFI Data' inline='true' name='ufi_full' version='21.4'>
+      <connection class='textscan' filename='/Users/abhaygupta/ufi /tableau/ufi_full.csv' separator=',' locale='en_US'>
+        <relation name='ufi_full' table='[ufi_full#csv]' type='text'>
+          <columns header='yes' separator=','>
+            <column datatype='string'  name='road_id'/>
+            <column datatype='string'  name='road_name'/>
+            <column datatype='string'  name='neighbourhood'/>
+            <column datatype='integer' name='hour'/>
+            <column datatype='real'    name='avg_speed'/>
+            <column datatype='integer' name='volume'/>
+            <column datatype='integer' name='capacity'/>
+            <column datatype='real'    name='ufi_score'/>
+            <column datatype='string'  name='ufi_class'/>
+            <column datatype='real'    name='C1'/>
+            <column datatype='real'    name='C2'/>
+            <column datatype='real'    name='C3'/>
+            <column datatype='real'    name='C4'/>
+            <column datatype='real'    name='temporal_weight'/>
+            <column datatype='real'    name='nlp_severity'/>
+            <column datatype='integer' name='incident_count'/>
+            <column datatype='string'  name='incident_text'/>
+          </columns>
+        </relation>
+      </connection>
+      <!-- Calculated fields -->
+      <column caption='UFI Score Bucket' datatype='string' name='[UFI Score Bucket]' role='dimension' type='nominal'>
+        <calculation class='tableau' formula='IF [ufi_score] &lt; 15 THEN "Free Flow" ELSEIF [ufi_score] &lt; 35 THEN "Low" ELSEIF [ufi_score] &lt; 55 THEN "Moderate" ELSEIF [ufi_score] &lt; 75 THEN "High" ELSE "Severe" END'/>
+      </column>
+      <column caption='Is Peak Hour' datatype='boolean' name='[Is Peak Hour]' role='dimension' type='nominal'>
+        <calculation class='tableau' formula='([hour] >= 7 AND [hour] &lt;= 10) OR ([hour] >= 17 AND [hour] &lt;= 20)'/>
+      </column>
+      <column caption='Congestion Level (numeric)' datatype='real' name='[Congestion Level]' role='measure' type='quantitative'>
+        <calculation class='tableau' formula='IF [ufi_score] &lt; 15 THEN 1 ELSEIF [ufi_score] &lt; 35 THEN 2 ELSEIF [ufi_score] &lt; 55 THEN 3 ELSEIF [ufi_score] &lt; 75 THEN 4 ELSE 5 END'/>
+      </column>
+    </datasource>
+  </datasources>
+  <worksheets>
+    <!-- Sheet 1: Hourly UFI trend -->
+    <worksheet name='City UFI by Hour'>
+      <table>
+        <view>
+          <datasources>
+            <datasource caption='UFI Data' name='ufi_full'/>
+          </datasources>
+          <aggregation value='true'/>
+        </view>
+        <style/>
+        <panes>
+          <pane>
+            <mark class='Line'/>
+            <encodings>
+              <column>[hour]</column>
+              <row>AVG([ufi_score])</row>
+            </encodings>
+          </pane>
+        </panes>
+      </table>
+    </worksheet>
+    <!-- Sheet 2: Neighbourhood heatmap -->
+    <worksheet name='Neighbourhood Heatmap'>
+      <table>
+        <view>
+          <datasources>
+            <datasource caption='UFI Data' name='ufi_full'/>
+          </datasources>
+          <aggregation value='true'/>
+        </view>
+        <panes>
+          <pane>
+            <mark class='Square'/>
+            <encodings>
+              <column>[neighbourhood]</column>
+              <row>[hour]</row>
+              <color>AVG([ufi_score])</color>
+            </encodings>
+          </pane>
+        </panes>
+      </table>
+    </worksheet>
+  </worksheets>
+  <windows>
+    <window classname='worksheet' maximized='true' name='City UFI by Hour'/>
+  </windows>
+</workbook>
